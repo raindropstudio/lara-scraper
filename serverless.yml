@@ -20,9 +20,13 @@ service: lara-scraper
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
 
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs16.x
 
 # you can overwrite defaults here
 #  stage: dev
