@@ -1,1 +1,0 @@
-{"version":3,"file":"handler.js","sourceRoot":"","sources":["../handler.ts"],"names":[],"mappings":"AAAA,YAAY,CAAC;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;AAEb,OAAO,CAAC,KAAK,GAAG,UAAM,KAAK;;QACzB,sBAAO;gBACL,UAAU,EAAE,GAAG;gBACf,IAAI,EAAE,IAAI,CAAC,SAAS,CAClB;oBACE,OAAO,EAAE,0DAA0D;oBACnE,KAAK,EAAE,KAAK;iBACb,EACD,IAAI,EACJ,CAAC,CACF;aACF,EAAC;;KAIH,CAAC"}
