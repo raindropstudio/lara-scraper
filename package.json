@@ -2,9 +2,11 @@
   "name": "lara-scraper",
   "version": "1.0.0",
   "description": "",
-  "main": "handler.js",
+  "main": "src/handler.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev:rank": "serverless invoke local --function rankList",
+    "dev:character": "serverless invoke local --function characterInfo"
   },
   "repository": {
     "type": "git",
