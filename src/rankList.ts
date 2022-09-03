@@ -6,7 +6,7 @@ exports.rankList = async event => {
     statusCode: 200,
     body: JSON.stringify(
       {
-        message: await getRankByNickname(RANKTYPE.TOTAL, '소주에보드카'),
+        message: await getRankByNickname(RANKTYPE['Total'], '소주에보드카'),
         input: event,
       },
       null,
