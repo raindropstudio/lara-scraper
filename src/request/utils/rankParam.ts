@@ -1,4 +1,4 @@
-import { Option } from "../ranktype";
+import { Option } from "./ranktype";
 
 const WORLD = {
   "전체월드": 0,  "리부트2" : 1,  "리부트"  : 2,
@@ -60,6 +60,16 @@ const GRADE = {
   "브론즈"  : 6,
 }
 
-export const convertToParam = (option: Option) => {
-  
+export const toUrlParam = (option: Option) => {
+  let urlParam: string[] = [];
+  if (option?.nickname) urlParam.push(`c=${encodeURIComponent(option.nickname)}`);
+  if (option?.world) urlParam.push(`w=${WORLD[option.world]}`);
+  if (option?.job) {
+    urlParam.push(`j=${JOB[option.job][0]}`);
+    if(JOB[option.job][1] !== -1) urlParam.push(`d=${JOB[option.job][1]}`);
+  }
+  if (option?.type) urlParam.push(`t=${TYPE[option.type]}`);
+  if (option?.grade) urlParam.push(`g=${GRADE[option.grade]}`);
+  if (option?.page) urlParam.push(`page=${option.page}`);
+  return urlParam.join('&');
 }

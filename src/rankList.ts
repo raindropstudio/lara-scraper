@@ -1,12 +1,18 @@
-import { getRankByNickname } from './request/rank';
-import { RANKTYPE } from './request/ranktype';
+import { parseRank } from './parser/rank';
+import { getRank } from './request/rank';
+import { RANKTYPE } from './request/utils/ranktype';
 
 exports.rankList = async event => {
+  const html = await getRank(RANKTYPE['Total'], {
+    'nickname': '루델팡'
+  });
+  const data = parseRank(html);
+  console.log(JSON.stringify(data, null, 2));
   return {
     statusCode: 200,
     body: JSON.stringify(
       {
-        message: await getRankByNickname(RANKTYPE['Total'], '소주에보드카'),
+        message: 'test',
         input: event,
       },
       null,

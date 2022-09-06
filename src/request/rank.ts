@@ -1,5 +1,6 @@
-import axios from 'axios';
-import { Option, RANKTYPE } from './ranktype';
+import { reqMaple } from './utils/axiosConfig';
+import { toUrlParam } from './utils/rankParam';
+import { Option, RANKTYPE } from './utils/ranktype';
 
 const RANKURL = {
   [RANKTYPE.Total]: 'https://maplestory.nexon.com/Ranking/World/Total',
@@ -11,19 +12,12 @@ const RANKURL = {
 
 // 무릉도장은 Dojang/thisWeek , Dojang/LastWeek 두 URL 사용
 
-export const getRankByNickname = async (ranktype: RANKTYPE, nickname: string, option) => {
-  const encodedNickname = encodeURIComponent(nickname);
-  const url = RANKURL[ranktype] + `?c=${encodedNickname}`;
-  const res = await axios(url);
-  return res.data;
-}
-
-export const getRankByPage = async (ranktype: RANKTYPE, page: number) => {
-  const url = RANKURL[ranktype] + `?page=${page}`;
-  const res = await axios(url);
-  return res.data;
-}
-
 export const getRank = async (ranktype: RANKTYPE, option: Option) => {
-  
+  let url = RANKURL[ranktype];
+  if(ranktype == RANKTYPE.Dojang) {
+    url += option.period == 'thisWeek' ? '/thisWeek' : '/lastWeek';
+  }
+  url += '?' + toUrlParam(option);
+  const { data: res } = await reqMaple(url);
+  return res;
 }
