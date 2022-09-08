@@ -9,6 +9,13 @@
     "moduleResolution": "node",
     "lib": [
       "ES2020"
-    ],
-  }
+    ]
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    ".build"
+  ]
 }

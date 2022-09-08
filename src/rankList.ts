@@ -1,4 +1,4 @@
-import { parseRank } from './parser/rank';
+import { parseRank } from './parser/commonRank';
 import { getRank } from './request/rank';
 import { RANKTYPE } from './request/utils/ranktype';
 
