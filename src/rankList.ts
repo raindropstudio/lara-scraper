@@ -1,12 +1,15 @@
-import { parseRank } from './parser/commonRank';
+import { parseRank } from './parser/rank';
 import { getRank } from './request/rank';
 import { RANKTYPE } from './request/utils/ranktype';
 
 exports.rankList = async event => {
-  const html = await getRank(RANKTYPE['Total'], {
-    'nickname': '루델팡'
+  const ranktype = 'Dojang';
+  const html = await getRank(RANKTYPE[ranktype], {
+    'nickname': '진격캐넌',
+    'period': 'thisweek',
+    'type': '통달',
   });
-  const data = parseRank(html);
+  const data = parseRank(RANKTYPE[ranktype], html);
   console.log(JSON.stringify(data, null, 2));
   return {
     statusCode: 200,
