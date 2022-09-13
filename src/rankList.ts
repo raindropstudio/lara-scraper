@@ -6,7 +6,7 @@ exports.rankList = async event => {
   const ranktype = 'Dojang';
   const html = await getRank(RANKTYPE[ranktype], {
     'nickname': '진격캐넌',
-    'period': 'thisweek',
+    'period': 'lastweek',
     'type': '통달',
   });
   const data = parseRank(RANKTYPE[ranktype], html);

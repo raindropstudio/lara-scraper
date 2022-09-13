@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 export const reqMaple = axios.create({
+  baseURL: 'https://maplestory.nexon.com',
   timeout: 3000,
   headers: {
     'Accepts': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
