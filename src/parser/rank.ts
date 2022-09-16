@@ -27,7 +27,8 @@ const parseDojang = (ctx: cheerio.Element) => {
   const $ = cheerio.load(ctx);
   const level = parseInt($('td:nth-child(3)').text().split('.')[1].trim(), 10);
   const floor = parseInt($('td:nth-child(4)').text().trim(), 10);
-  const time = $('td:nth-child(5)').text().trim(); //TODO: 시간 파싱해야함?
+  const timeText = $('td:nth-child(5)').text().trim();
+  const time = parseInt(timeText.split('분')[0].trim(), 10) * 60 + parseInt(timeText.split('분')[1].split('초')[0].trim(), 10);
   return { level, floor, time };
 }
 
@@ -35,7 +36,8 @@ const parseSeed = (ctx: cheerio.Element) => {
   const $ = cheerio.load(ctx);
   const level = parseInt($('td:nth-child(3)').text().split('.')[1].trim(), 10);
   const floor = parseInt($('td:nth-child(4)').text().trim(), 10);
-  const time = $('td:nth-child(5)').text().trim();
+  const timeText = $('td:nth-child(5)').text().trim();
+  const time = parseInt(timeText.split('분')[0].trim(), 10) * 60 + parseInt(timeText.split('분')[1].split('초')[0].trim(), 10);
   return { level, floor, time };
 }
 
@@ -65,7 +67,7 @@ interface RankData {
   pop?: number;
   guild?: string;
   floor?: number;
-  time?: string;
+  time?: number;
   unionLevel?: number;
   unionPower?: number;
   archieveGrade?: number;
