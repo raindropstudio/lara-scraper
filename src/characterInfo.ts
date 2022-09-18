@@ -9,11 +9,13 @@ import { RANKTYPE } from "./request/utils/ranktype";
 exports.characterInfo = async event => {
   const chtml = await getRank(RANKTYPE['Total'], { 'nickname': '소주에보드카' });
   const cdata = parseRank(RANKTYPE['Total'], chtml);
-  const infotype = 'quest';
+  const infotype = 'questComplete';
   const html = await getCharacterInfo(INFOTYPE[infotype], cdata.list[cdata.searchCharacter].characterInfoUrl);
   const data = parseCharacterInfo(INFOTYPE[infotype], html);
-  const qhtml = await getQuestGroupDetail('프렌즈 스토리', data);
-  console.log(JSON.stringify(qhtml, null, 2));
+  console.time('getQuestGroupDetail');
+  const qhtml = await getQuestGroupDetail('캐시', data);
+  console.timeEnd('getQuestGroupDetail');
+  // console.log(JSON.stringify(qhtml, null, 2));
   return {
     statusCode: 200,
     body: JSON.stringify(

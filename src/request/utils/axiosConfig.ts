@@ -1,4 +1,6 @@
 import axios from 'axios';
+import * as http from 'http';
+import * as https from 'https';
 
 export const reqMaple = axios.create({
   baseURL: 'https://maplestory.nexon.com',
@@ -19,5 +21,7 @@ export const reqMaple = axios.create({
     'Sec-Fetch-Site': 'same-origin',
     'Sec-Fetch-User': '?1',
     'Upgrade-Insecure-Requests': '1',
-  }
+  },
+  httpAgent: new http.Agent({ keepAlive: true }),
+  httpsAgent: new https.Agent({ keepAlive: true }),
 });
