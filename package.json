@@ -5,7 +5,7 @@
   "main": "src/handler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev:rank": "serverless invoke local --function rankList",
+    "dev:rank": "serverless invoke local --function rankList --path mocks/rankList.json",
     "dev:character": "serverless invoke local --function characterInfo"
   },
   "repository": {
@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "axios": "^0.27.2",
-    "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12",
+    "luxon": "^3.0.3"
   }
 }

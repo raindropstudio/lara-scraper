@@ -1,6 +1,11 @@
-import axios from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as http from 'http';
 import * as https from 'https';
+
+const MAX_CONCURRENT_REQUESTS = 4;
+const CHECK_INTERVAL = 10; // ms
+const MAX_RETRY_COUNT = 3;
+let currentRequests = 0;
 
 export const reqMaple = axios.create({
   baseURL: 'https://maplestory.nexon.com',
@@ -25,3 +30,19 @@ export const reqMaple = axios.create({
   httpAgent: new http.Agent({ keepAlive: true }),
   httpsAgent: new https.Agent({ keepAlive: true }),
 });
+
+reqMaple.interceptors.request.use(
+  (config: AxiosRequestConfig) => {
+  return config;
+  }, (error: AxiosError) => {
+  return Promise.reject(error);
+  }
+);
+
+reqMaple.interceptors.response.use(
+  (response: AxiosResponse) => {
+  return response;
+  }, (error: AxiosError) => {
+  return Promise.reject(error);
+  }
+);
