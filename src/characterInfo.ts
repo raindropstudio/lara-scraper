@@ -7,7 +7,13 @@ import { getRank } from "./request/rank";
 import { INFOTYPE } from "./request/utils/characterInfoType";
 import { RANKTYPE } from "./request/utils/ranktype";
 
-exports.characterInfo = async event => {
+interface CharacterInfoRequest {
+  nickname: string,
+  rank: [],
+  info: [],
+};
+
+exports.characterInfo = async (event: CharacterInfoRequest) => {
   const chtml = await getRank(RANKTYPE['Total'], { 'nickname': '소주에보드카' });
   const cdata = parseRank(RANKTYPE['Total'], chtml);
   const infotype = 'quest';

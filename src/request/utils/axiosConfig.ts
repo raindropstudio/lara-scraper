@@ -2,10 +2,11 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as http from 'http';
 import * as https from 'https';
 
-const MAX_CONCURRENT_REQUESTS = 4;
+const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 4;
 const CHECK_INTERVAL = 10; // ms
-const MAX_RETRY_COUNT = 3;
+const GLOBAL_MAX_RETRY = 5;
 let currentRequests = 0;
+let currentRetry = 0;
 
 export const reqMaple = axios.create({
   baseURL: 'https://maplestory.nexon.com',
@@ -33,16 +34,31 @@ export const reqMaple = axios.create({
 
 reqMaple.interceptors.request.use(
   (config: AxiosRequestConfig) => {
-  return config;
+    return new Promise((resolve, reject) => {
+      const interval = setInterval(() => {
+        if (currentRequests < MAX_CONCURRENT_REQUESTS) {
+          currentRequests++;
+          clearInterval(interval);
+          resolve(config);
+        }
+      }, CHECK_INTERVAL);
+    });
   }, (error: AxiosError) => {
-  return Promise.reject(error);
+    return Promise.reject(error);
   }
 );
 
 reqMaple.interceptors.response.use(
   (response: AxiosResponse) => {
-  return response;
+    currentRequests = Math.max(0, currentRequests - 1);
+    currentRetry = 0;
+    return Promise.resolve(response);
   }, (error: AxiosError) => {
-  return Promise.reject(error);
+    currentRequests = Math.max(0, currentRequests - 1);
+    if (currentRetry < GLOBAL_MAX_RETRY) {
+      currentRetry++;
+      return reqMaple.request(error.config);
+    }
+    return Promise.reject(error);
   }
 );

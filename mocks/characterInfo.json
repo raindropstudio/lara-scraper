@@ -1,0 +1,31 @@
+{
+  "nickname": "소주에보드카",
+  "rank": [
+    {
+      "type": "total",
+      "job": "비숍"
+    },{
+      "type": "total",
+      "world": "엘리시움",
+      "job": "비숍"
+    },{
+      "type": "dojang",
+      "period": "lastweek"
+    }
+  ],
+  "info": [
+    { "type": "common" },
+    { "type": "ranking" },
+    { "type": "equipment" },
+    {
+      "type": "questDetail",
+      "progress": {
+        "group": ["제네시스 무기"]
+      },
+      "complete": {
+        "group": ["캐시"],
+        "entry": ["셀라스, 별이 잠긴 곳\t[셀라스] 노력한다면 인정해줄지도"]
+      }
+    }
+  ]
+}
