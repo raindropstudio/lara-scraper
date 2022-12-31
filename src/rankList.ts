@@ -1,5 +1,5 @@
 import { parseRank } from './parser/rank';
-import { getRank } from './request/rank';
+import { reqRank } from './request/rank';
 import { RANKTYPE } from './request/utils/ranktype';
 
 interface RankRequest {
@@ -13,7 +13,7 @@ interface RankRequest {
 exports.rankList = async (event: RankRequest) => {
   let html, parsed;
   try {
-    html = await getRank(RANKTYPE[event.ranktype], event);
+    html = await reqRank(RANKTYPE[event.ranktype], event);
   } catch (e) {
     console.log(e);
     return { status: "error", message: "request error" };

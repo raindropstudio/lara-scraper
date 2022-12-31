@@ -18,7 +18,7 @@ const INFOURL = {
   [INFOTYPE.guild]: '/Guild',
 };
 
-export const getCharacterInfo = async (info: INFOTYPE, characterURL: string) => {
+export const reqCharacterInfo = async (info: INFOTYPE, characterURL: string) => {
   const nickname = characterURL.split('?')[0].split('/').reverse()[0];
   const param = characterURL.split('?')[1];
   const url = COMMONURL + nickname + INFOURL[info] + '?' + param;

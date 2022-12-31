@@ -13,7 +13,7 @@ const RANKURL = {
 
 // 무릉도장은 Dojang/thisWeek , Dojang/LastWeek 두 URL 사용
 
-export const getRank = async (ranktype: RANKTYPE, option: Option) => {
+export const reqRank = async (ranktype: RANKTYPE, option: Option) => {
   let url = RANKURL[ranktype];
   if(ranktype == RANKTYPE.Dojang) {
     url += option.period == 'thisweek' ? '/ThisWeek' : '/LastWeek';

@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev:rank": "serverless invoke local --function rankList --path mocks/rankList.json",
-    "dev:character": "serverless invoke local --function characterInfo"
+    "dev:character": "serverless invoke local --function characterInfo --path mocks/characterInfo.json"
   },
   "repository": {
     "type": "git",
