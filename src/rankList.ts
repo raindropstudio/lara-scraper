@@ -1,29 +1,29 @@
-import { parseRank } from './parser/rank';
-import { reqRank } from './request/rank';
+import { getRank } from './controller';
 import { RANKTYPE } from './request/utils/ranktype';
 
 interface RankRequest {
-  ranktype: "dojang" | "seed",
-  period?: "thisweek" | "lastweek", // 없을시 기본 lastweek
-  type?: "입문" | "통달", // 무릉만, 없을시 기본 통달
+  type: string,
+  period?: string,
+  world?: string,
+  job?: string,
+  dojang?: string,
+  grade?: string,
   offset: number,
   limit: number,
 };
 
 exports.rankList = async (event: RankRequest) => {
-  let html, parsed;
+  let res: object;
   try {
-    html = await reqRank(RANKTYPE[event.ranktype], event);
+    res = await getRank(RANKTYPE[event.type], event);
   } catch (e) {
-    console.log(e);
-    return { status: "error", message: "request error" };
+    return JSON.stringify({
+      status: 'error',
+      message: e.message,
+    });
   }
-  try {
-    parsed = parseRank(RANKTYPE[event.ranktype], html);
-  } catch (e) {
-    console.log(e);
-    return { status: "error", message: "parse error" };
-  }
-  const data = JSON.stringify(parsed, null, 2);
-  return { status: "success", data };
+  return JSON.stringify({
+    status: 'success',
+    data: res,
+  });
 };

@@ -2,8 +2,8 @@ import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as http from 'http';
 import * as https from 'https';
 
-const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 4;
-const CHECK_INTERVAL = 10; // ms
+const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 3;
+const CHECK_INTERVAL = 30; // ms
 const GLOBAL_MAX_RETRY = 5;
 let currentRequests = 0;
 let currentRetry = 0;

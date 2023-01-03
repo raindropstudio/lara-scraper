@@ -49,7 +49,7 @@ const JOB = {
 }
 
 // 무릉도장
-const TYPE = {
+const DOJANG = {
   "입문": 0, "통달": 2,
 }
 
@@ -68,7 +68,7 @@ export const toUrlParam = (option: Option) => {
     urlParam.push(`j=${JOB[option.job][0]}`);
     if(JOB[option.job][1] !== -1) urlParam.push(`d=${JOB[option.job][1]}`);
   }
-  if (option?.type) urlParam.push(`t=${TYPE[option.type]}`);
+  if (option?.dojang) urlParam.push(`t=${DOJANG[option.dojang]}`);
   if (option?.grade) urlParam.push(`g=${GRADE[option.grade]}`);
   if (option?.page) urlParam.push(`page=${option.page}`);
   return urlParam.join('&');

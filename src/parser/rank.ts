@@ -75,12 +75,12 @@ interface RankData {
 }
 
 const PARSER = {
-  [RANKTYPE['Total']]: parseTotal,
-  [RANKTYPE['Pop']]: parseTotal,
-  [RANKTYPE['Dojang']]: parseDojang,
-  [RANKTYPE['Seed']]: parseSeed,
-  [RANKTYPE['Union']]: parseUnion,
-  [RANKTYPE['Achieve']]: parseAchieve
+  [RANKTYPE.total]: parseTotal,
+  [RANKTYPE.pop]: parseTotal,
+  [RANKTYPE.dojang]: parseDojang,
+  [RANKTYPE.seed]: parseSeed,
+  [RANKTYPE.union]: parseUnion,
+  [RANKTYPE.achieve]: parseAchieve
 }
 
 export const parseRank = (ranktype:RANKTYPE, html: string) => {

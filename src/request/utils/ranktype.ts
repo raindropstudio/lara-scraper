@@ -1,10 +1,10 @@
 export enum RANKTYPE {
-  Total = 'Total',
-  Pop = 'Pop',
-  Dojang = 'Dojang',
-  Seed = 'Seed',
-  Union = 'Union',
-  Achieve = 'Achieve',
+  total = 'total',
+  pop = 'pop',
+  dojang = 'dojang',
+  seed = 'seed',
+  union = 'union',
+  achieve = 'achieve',
 }
 
 export type Option = {
@@ -12,7 +12,7 @@ export type Option = {
   world?: string,
   job?: string,
   period?: string,
-  type?: string, // 무릉도장 구간, 입문 0 통달 2
+  dojang?: string, // 무릉도장 구간, 입문 0 통달 2
   grade?: string, // 업적 등급
   page?: number,
 }

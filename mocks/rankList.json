@@ -1,7 +1,7 @@
 {
-  "ranktype": "Dojang",
+  "type": "dojang",
   "period": "lastweek",
-  "type": "통달",
+  "dojang": "통달",
   "offset": 100,
   "limit": 1
 }

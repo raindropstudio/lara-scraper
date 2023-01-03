@@ -1,37 +1,98 @@
-import { parseCharacterInfo } from "./parser/character";
-import { parseQuestDetail } from "./parser/info/questDetail";
-import { parseRank } from "./parser/rank";
-import { reqCharacterInfo } from "./request/character";
-import { reqQuestDetail } from "./request/quest";
-import { reqRank } from "./request/rank";
+import { getCharacterInfo, getQuestDetail, getQuestGroupDetail, getRank } from "./controller";
 import { INFOTYPE } from "./request/utils/characterInfoType";
 import { RANKTYPE } from "./request/utils/ranktype";
 
 interface CharacterInfoRequest {
   nickname: string,
-  rank: [],
-  info: [],
+  rank?: [{
+    type: string,
+    period?: string,
+    world?: string,
+    job?: string,
+    dojang?: string,
+    grade?: string,
+    }],
+  info?: [{
+    type: string,
+    progress?: {
+      group?: string[],
+      entry?: string[],
+    },
+    complete?: {
+      group?: string[],
+      entry?: string[],
+    },
+  }],
 };
 
 exports.characterInfo = async (event: CharacterInfoRequest) => {
-  const chtml = await reqRank(RANKTYPE['Total'], { 'nickname': '소주에보드카' });
-  const cdata = parseRank(RANKTYPE['Total'], chtml);
-  const infotype = 'quest';
-  const html = await reqCharacterInfo(INFOTYPE[infotype], cdata.list[cdata.searchCharacter].characterInfoUrl);
-  const data = parseCharacterInfo(INFOTYPE[infotype], html);
-  const qhtml = await reqQuestDetail('제네시스 무기\t[제네시스 무기] 폭군 매그너스의 흔적', data);
-  // const qhtml = await getQuestDetail('셀라스, 별이 잠긴 곳\t[셀라스] 노력한다면 인정해줄지도', data);
-  const qdata = parseQuestDetail(INFOTYPE[infotype], qhtml);
-  console.log(JSON.stringify(qdata, null, 2));
+  //? 캐릭터정보 URL
+  let characterInfoUrl: string;
+  try {
+    const character = await getRank(RANKTYPE['total'], { nickname: event.nickname });
+    characterInfoUrl = character.list[character.searchCharacter].characterInfoUrl;
+  } catch (e) {
+    console.log(e);
+    return {
+      status: 'error',
+      message: e.message,
+    };
+  }
+
+  const data: object = {};
+  try {
+    let rank, info;
+
+    //? rank
+    if (event.rank) {
+      rank = Promise.all(event.rank.map(async (entry) => {
+        return await getRank(RANKTYPE[entry.type], { nickname: event.nickname, ...entry });
+      }));
+    }
+
+    //? info - quest와 questDetail의 경우 특별하게 처리해야함
+    if (event.info) {
+      const questType = {
+        'progress': 'quest',
+        'complete': 'questComplete',
+      };
+      const getDetail = {
+        'group': getQuestGroupDetail,
+        'entry': getQuestDetail,
+      };
+      info = Promise.all(event.info.map(async (entry) => {
+        if (entry.type === 'questDetail') {
+          let promise = [];
+          for (const qtype in questType) {
+            if (entry[qtype]) {
+              const quest = await getCharacterInfo(INFOTYPE[questType[qtype]], characterInfoUrl);
+              for (const dtype in getDetail) {
+                if (entry[qtype][dtype]) {
+                  promise = promise.concat(entry[qtype][dtype].map(async (item: string) => {
+                    return await getDetail[dtype](INFOTYPE[questType[qtype]], item, quest);
+                  }));
+                }
+              }
+            }
+          }
+          return await Promise.all(promise);
+        }
+        return await getCharacterInfo(INFOTYPE[entry.type], characterInfoUrl);
+      }));
+    }
+
+    if (event.rank) data['rank'] = await rank;
+    if (event.info) data['info'] = await info;
+  } catch (e) {
+    console.log(e);
+    return {
+      status: 'error',
+      message: e.message,
+    };
+  }
+
   return {
-    statusCode: 200,
-    body: JSON.stringify(
-      {
-        message: 'characterInfo',
-        input: event,
-      },
-      null,
-      2
-    ),
-  };
+    status: 'success',
+    data,
+  }
 };
