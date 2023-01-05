@@ -1,4 +1,4 @@
-import { INFOTYPE } from "../request/utils/characterInfoType";
+import { INFOTYPE } from "../request/types/characterInfoType";
 import { parseCommon } from "./info/common";
 import { parseEquipment } from "./info/equipment";
 import { parseQuest } from "./info/quest";

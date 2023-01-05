@@ -1,16 +1,6 @@
 import { getRank } from './controller';
-import { RANKTYPE } from './request/utils/ranktype';
-
-interface RankRequest {
-  type: string,
-  period?: string,
-  world?: string,
-  job?: string,
-  dojang?: string,
-  grade?: string,
-  offset: number,
-  limit: number,
-};
+import { RANKTYPE } from './request/types/ranktype';
+import { RankRequest } from './requestType';
 
 exports.rankList = async (event: RankRequest) => {
   let res: object;

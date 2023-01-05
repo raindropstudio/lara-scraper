@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { DateTime } from 'luxon';
-import { INFOTYPE } from '../../request/utils/characterInfoType';
+import { INFOTYPE } from '../../request/types/characterInfoType';
 
 const quest = (ctx: cheerio.CheerioAPI) => {
   return {

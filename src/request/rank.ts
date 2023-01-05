@@ -1,6 +1,6 @@
+import { Option, RANKTYPE } from './types/ranktype';
 import { reqMaple } from './utils/axiosConfig';
 import { toUrlParam } from './utils/rankParam';
-import { Option, RANKTYPE } from './utils/ranktype';
 
 const RANKURL = {
   [RANKTYPE.total]: '/Ranking/World/Total',
@@ -14,7 +14,7 @@ const RANKURL = {
 // 무릉도장은 Dojang/thisWeek , Dojang/LastWeek 두 URL 사용
 
 export const reqRank = async (ranktype: RANKTYPE, option: Option) => {
-  let url = RANKURL[ranktype];
+  let url = RANKURL[ranktype ?? RANKTYPE.total];
   if(ranktype == RANKTYPE.dojang) {
     url += option.period == 'thisweek' ? '/ThisWeek' : '/LastWeek';
   }

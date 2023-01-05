@@ -1,4 +1,4 @@
-import { Option } from "./ranktype";
+import { Option } from "../types/ranktype";
 
 const WORLD = {
   "전체월드": 0,  "리부트2" : 1,  "리부트"  : 2,

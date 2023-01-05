@@ -1,5 +1,5 @@
+import { INFOTYPE } from "./types/characterInfoType";
 import { reqMaple } from "./utils/axiosConfig";
-import { INFOTYPE } from "./utils/characterInfoType";
 
 // /Common/Character/Detail/{캐릭터명}{INFOURL}?p={코드}
 const COMMONURL = '/Common/Character/Detail/';

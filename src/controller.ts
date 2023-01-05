@@ -1,14 +1,21 @@
 import { parseCharacterInfo } from "./parser/character";
 import { parseQuestDetail } from "./parser/info/questDetail";
 import { parseRank } from "./parser/rank";
+import { RankData } from "./parser/types/rankData";
 import { reqCharacterInfo } from "./request/character";
 import { reqQuestDetail } from "./request/quest";
 import { reqRank } from "./request/rank";
-import { INFOTYPE } from "./request/utils/characterInfoType";
-import { Option, RANKTYPE } from "./request/utils/ranktype";
+import { INFOTYPE } from "./request/types/characterInfoType";
+import { Option, RANKTYPE } from "./request/types/ranktype";
+import { RankRequest } from "./requestType";
 
-export const getRank = async (ranktype: RANKTYPE, option: Option) => {
-  let html: string, parsed: { list: object, searchCharacter: number };
+interface RankPage {
+  searchCharacter: number,
+  list: RankData[],
+}
+
+export const getRankPage = async (ranktype: RANKTYPE, option: Option) => {
+  let html: string, parsed: RankPage;
   try {
     html = await reqRank(ranktype, option);
   } catch (e) {
@@ -20,6 +27,26 @@ export const getRank = async (ranktype: RANKTYPE, option: Option) => {
     throw new Error(`Rank ${ranktype} parse error`);
   }
   return parsed;
+}
+
+export const getRank = async (ranktype: RANKTYPE, param: RankRequest) => {
+  let promise: Array<Promise<RankPage>> = [];
+  if (param.nickname) promise.push(getRankPage(ranktype, param));
+  else {
+    const start = param.offset ?? 1;
+    const end = start + (param.limit ?? 1);
+    for (let page = start; page < end; page += 1) {
+      const { offset, limit, ...option } = { ...param, page };
+      promise.push(getRankPage(ranktype, option));
+    }
+  }
+  const rankPages: RankPage[] = await Promise.all(promise);
+  const list: RankData[] = rankPages.reduce((acc: RankData[], cur) => acc.concat(cur.list), []);
+  const res = {
+    searchCharacter: rankPages[0].searchCharacter ?? -1,
+    list,
+  }
+  return res;
 };
 
 export const getCharacterInfo = async (infotype: INFOTYPE, url: string) => {

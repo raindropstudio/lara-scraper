@@ -1,5 +1,6 @@
 import * as cheerio from 'cheerio';
-import { RANKTYPE } from '../request/utils/ranktype';
+import { RANKTYPE } from '../request/types/ranktype';
+import { RankData } from './types/rankData';
 
 const parseCommon = (ctx: cheerio.Element) => {
   const $ = cheerio.load(ctx);
@@ -53,25 +54,6 @@ const parseAchieve = (ctx: cheerio.Element) => {
   const archieveGrade = parseInt($('td:nth-child(4)').text().trim(), 10);
   const archievePoint = parseInt($('td:nth-child(5)').text().trim().replace(/,/g, ''), 10);
   return { archieveGrade, archievePoint };
-}
-
-interface RankData {
-  rank: number;
-  rankChange: number;
-  characterImage: string;
-  characterInfoUrl: string;
-  nickname: string;
-  job: string;
-  level?: number;
-  exp?: number;
-  pop?: number;
-  guild?: string;
-  floor?: number;
-  time?: number;
-  unionLevel?: number;
-  unionPower?: number;
-  archieveGrade?: number;
-  archievePoint?: number;
 }
 
 const PARSER = {

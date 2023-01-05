@@ -1,29 +1,7 @@
 import { getCharacterInfo, getQuestDetail, getQuestGroupDetail, getRank } from "./controller";
-import { INFOTYPE } from "./request/utils/characterInfoType";
-import { RANKTYPE } from "./request/utils/ranktype";
-
-interface CharacterInfoRequest {
-  nickname: string,
-  rank?: [{
-    type: string,
-    period?: string,
-    world?: string,
-    job?: string,
-    dojang?: string,
-    grade?: string,
-    }],
-  info?: [{
-    type: string,
-    progress?: {
-      group?: string[],
-      entry?: string[],
-    },
-    complete?: {
-      group?: string[],
-      entry?: string[],
-    },
-  }],
-};
+import { INFOTYPE } from "./request/types/characterInfoType";
+import { RANKTYPE } from "./request/types/ranktype";
+import { CharacterInfoRequest } from "./requestType";
 
 exports.characterInfo = async (event: CharacterInfoRequest) => {
   //? 캐릭터정보 URL
