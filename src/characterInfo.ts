@@ -28,37 +28,46 @@ exports.characterInfo = async (event: CharacterInfoRequest) => {
       }));
     }
 
-    //? info - quest와 questDetail의 경우 특별하게 처리해야함
+    //? info
     if (event.info) {
-      const questType = {
-        'progress': 'quest',
-        'complete': 'questComplete',
-      };
-      const getDetail = {
-        'group': getQuestGroupDetail,
-        'entry': getQuestDetail,
-      };
-      info = Promise.all(event.info.map(async (entry) => {
-        if (entry.type === 'questDetail') {
-          let promise = [];
-          for (const qtype in questType) {
-            if (entry[qtype]) {
-              const quest = await getCharacterInfo(INFOTYPE[questType[qtype]], characterInfoUrl);
-              for (const dtype in getDetail) {
-                if (entry[qtype][dtype]) {
-                  promise = promise.concat(entry[qtype][dtype].map(async (item: string) => {
-                    return await getDetail[dtype](INFOTYPE[questType[qtype]], item, quest);
-                  }));
-                }
+      // questDetail 특별하게 처리
+      const questDetail = async (entry: object) => {
+        const questType = {
+          'progress': 'quest',
+          'complete': 'questComplete',
+        };
+        const getDetail = {
+          'group': getQuestGroupDetail,
+          'entry': getQuestDetail,
+        };
+
+        let questPromise = [];
+        for (const qtype in questType) {
+          if (entry[qtype]) {
+            const quest = await getCharacterInfo(INFOTYPE[questType[qtype]], characterInfoUrl);
+            for (const dtype in getDetail) {
+              if (entry[qtype][dtype]) {
+                questPromise = questPromise.concat(entry[qtype][dtype].map(async (item: string) => {
+                  return await getDetail[dtype](INFOTYPE[questType[qtype]], item, quest);
+                }));
               }
             }
           }
-          return await Promise.all(promise);
         }
-        return await getCharacterInfo(INFOTYPE[entry.type], characterInfoUrl);
-      }));
+        return questPromise;
+      };
+
+      const task = event.info.map(async (entry) => {
+        if (entry.type === 'questDetail')
+          return await Promise.all(await questDetail(entry));
+        else
+          return await getCharacterInfo(INFOTYPE[entry.type], characterInfoUrl);
+      });
+
+      info = Promise.all(task);
     }
 
+    //? await
     if (event.rank) data['rank'] = await rank;
     if (event.info) data['info'] = await info;
   } catch (e) {

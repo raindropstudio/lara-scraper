@@ -5,7 +5,7 @@ import { RankRequest } from './requestType';
 exports.rankList = async (event: RankRequest) => {
   let res: object;
   try {
-    res = await getRank(RANKTYPE[event.type], event);
+    res = await getRank(RANKTYPE[event.type || 'total'], event);
   } catch (e) {
     return JSON.stringify({
       status: 'error',

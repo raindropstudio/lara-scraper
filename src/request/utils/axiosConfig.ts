@@ -1,11 +1,8 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import * as http from 'http';
 import * as https from 'https';
 
-const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 3;
-const CHECK_INTERVAL = 30; // ms
 const GLOBAL_MAX_RETRY = 5;
-let currentRequests = 0;
 let currentRetry = 0;
 
 export const reqMaple = axios.create({
@@ -32,33 +29,28 @@ export const reqMaple = axios.create({
   httpsAgent: new https.Agent({ keepAlive: true }),
 });
 
-reqMaple.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
-    return new Promise((resolve, reject) => {
-      const interval = setInterval(() => {
-        if (currentRequests < MAX_CONCURRENT_REQUESTS) {
-          currentRequests++;
-          clearInterval(interval);
-          resolve(config);
-        }
-      }, CHECK_INTERVAL);
-    });
-  }, (error: AxiosError) => {
-    return Promise.reject(error);
-  }
-);
-
 reqMaple.interceptors.response.use(
   (response: AxiosResponse) => {
-    currentRequests = Math.max(0, currentRequests - 1);
+    // Response 내용이 100 미만일 경우 재시도
+    if (response.data.length < 100) {
+      if (currentRetry < GLOBAL_MAX_RETRY) {
+        console.log(`Null Response Retry (${currentRetry} / ${GLOBAL_MAX_RETRY}) : ${response.config.url}`);
+        currentRetry++;
+        return reqMaple.request(response.config);
+      }
+      console.log(`Null Response Reject (Retry count exceeded) : ${response.config.url}`);
+      return Promise.reject(response);
+    }
+
     currentRetry = 0;
     return Promise.resolve(response);
   }, (error: AxiosError) => {
-    currentRequests = Math.max(0, currentRequests - 1);
     if (currentRetry < GLOBAL_MAX_RETRY) {
+      console.log(`Error Response Retry (${currentRetry} / ${GLOBAL_MAX_RETRY}) : ${error.config.url}`);
       currentRetry++;
       return reqMaple.request(error.config);
     }
+    console.log(`Error Response Reject (Retry count exceeded) : ${error.config.url}`);
     return Promise.reject(error);
   }
 );

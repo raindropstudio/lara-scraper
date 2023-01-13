@@ -9,6 +9,5 @@ export const reqQuestDetail = async (entry: string, questData: object) => {
       'X-Requested-With': 'XMLHttpRequest',
     }
   });
-  
   return res.view;
 }

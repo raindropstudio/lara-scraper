@@ -15,8 +15,11 @@ const RANKURL = {
 
 export const reqRank = async (ranktype: RANKTYPE, option: Option) => {
   let url = RANKURL[ranktype ?? RANKTYPE.total];
-  if(ranktype == RANKTYPE.dojang) {
+  if (ranktype == RANKTYPE.dojang) {
+    // thisweek 명시 외에는 저번주로 간주
     url += option.period == 'thisweek' ? '/ThisWeek' : '/LastWeek';
+    // dojang 입문 명시 외에는 통달로 간주
+    if (option.dojang != '입문') option['dojang'] = '통달';
   }
   url += '?' + toUrlParam(option);
   const { data: res } = await reqMaple(url);

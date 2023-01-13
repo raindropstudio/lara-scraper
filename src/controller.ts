@@ -82,9 +82,10 @@ export const getQuestDetail = async (infotype: INFOTYPE, entry: string, questDat
 export const getQuestGroupDetail = async (infotype: INFOTYPE, group: string, questData: object) => {
   let details: object;
   try {
-    details = await Promise.all(Object.keys(questData[group]).map(async (questEntry: string) => {
+    const quests = Object.keys(questData[group]).map( async (questEntry: string) => {
       return await getQuestDetail(infotype, `${group}\t${questEntry}`, questData);
-    }));
+    });
+    details = await Promise.all(quests);
   } catch (e) {
     throw new Error(`QuestGroupDetail ${group} request error`);
   }
