@@ -33,22 +33,22 @@ export const reqMaple = axios.create({
   httpsAgent: new https.Agent({ keepAlive: true }),
 });
 
-const retry = (res: AxiosResponse | AxiosError, desc: string) => {
+const retry = (res: AxiosResponse | AxiosError, desc: string): Promise<AxiosResponse> => {
   if (currentRetry < GLOBAL_MAX_RETRY) {
-    console.log(`Retry [${desc}] (${currentRetry + 1} / ${GLOBAL_MAX_RETRY}) : ${res.config.url}`);
+    console.log(`Retry [${desc}] (${currentRetry + 1} / ${GLOBAL_MAX_RETRY}) : ${res.config?.url}`);
     currentRetry++;
     return new Promise((resolve) => {
       setTimeout(() => {
-        resolve(reqMaple.request(res.config));
+        resolve(reqMaple.request(res.config || {}));
       }, RETRY_DELAY_MS * (currentRetry + 1));
     });
   }
-  console.log(`Reject [${desc}] (Retry count exceeded) : ${res.config.url}`);
+  console.log(`Reject [${desc}] (Retry count exceeded) : ${res.config?.url}`);
   return Promise.reject(res);
 };
 
-const reqThrottle = (config: AxiosRequestConfig) => {
-  return new Promise((resolve, reject) => {
+const reqThrottle = (config: AxiosRequestConfig): Promise<any> => {
+  return new Promise((resolve) => {
     const interval = setInterval(() => {
       if (currentRequests < MAX_CONCURRENT_REQUESTS) {
         currentRequests++;
