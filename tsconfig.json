@@ -4,8 +4,9 @@
     "strictNullChecks": true,
     "sourceMap": true,
     "allowJs": true,
-    "target": "es5",
+    "target": "es2020",
     "outDir": ".build",
+    "module": "commonjs",
     "moduleResolution": "node",
     "lib": [
       "ES2020"
