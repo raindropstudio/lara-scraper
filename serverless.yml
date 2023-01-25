@@ -63,9 +63,9 @@ provider:
 
 functions:
   rankList:
-    handler: src/rankList.rankList
+    handler: src/handler.rankList
   characterInfo:
-    handler: src/characterInfo.characterInfo
+    handler: src/handler.characterInfo
 #    The following are a few example events you can configure
 #    NOTE: Please make sure to change your handler code to work with those events
 #    Check the event documentation for details

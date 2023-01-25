@@ -1,4 +1,5 @@
 import { parseCharacterInfo } from "./parser/character";
+import { isPrivate } from "./parser/info/private";
 import { parseQuestDetail } from "./parser/info/questDetail";
 import { parseRank } from "./parser/rank";
 import { RankData } from "./parser/types/rankData";
@@ -7,7 +8,8 @@ import { reqQuestDetail } from "./request/quest";
 import { reqRank } from "./request/rank";
 import { INFOTYPE } from "./request/types/characterInfoType";
 import { Option, RANKTYPE } from "./request/types/ranktype";
-import { RankRequest } from "./requestType";
+import { ParseError, PrivateError, QuestNotFoundError, RequestError } from "./types/error";
+import { RankRequest } from "./types/requestType";
 
 interface RankPage {
   searchCharacter: number,
@@ -19,12 +21,15 @@ export const getRankPage = async (ranktype: RANKTYPE, option: Option) => {
   try {
     html = await reqRank(ranktype, option);
   } catch (e) {
-    throw new Error(`Rank ${ranktype} request error`);
+    console.log(e);
+    throw new RequestError(`Rank ${ranktype} request error`);
   }
   try {
     parsed = parseRank(ranktype, html);
   } catch (e) {
-    throw new Error(`Rank ${ranktype} parse error`);
+    console.log(e);
+    console.log(html);
+    throw new ParseError(`Rank ${ranktype} parse error`);
   }
   return parsed;
 }
@@ -40,13 +45,19 @@ export const getRank = async (ranktype: RANKTYPE, param: RankRequest) => {
       promise.push(getRankPage(ranktype, option));
     }
   }
-  const rankPages: RankPage[] = await Promise.all(promise);
+
+  const res = await Promise.allSettled(promise);
+
+  const rankPages = res.map((item) => {
+    if (item.status === 'fulfilled') return item.value;
+    throw item.reason; //TODO: Retry
+  });
+
   const list: RankData[] = rankPages.reduce((acc: RankData[], cur) => acc.concat(cur.list), []);
-  const res = {
+  return {
     searchCharacter: rankPages[0].searchCharacter ?? -1,
     list,
-  }
-  return res;
+  };
 };
 
 export const getCharacterInfo = async (infotype: INFOTYPE, url: string) => {
@@ -54,41 +65,52 @@ export const getCharacterInfo = async (infotype: INFOTYPE, url: string) => {
   try {
     html = await reqCharacterInfo(infotype, url);
   } catch (e) {
-    throw new Error(`CharacterInfo ${infotype} request error`);
+    console.log(e);
+    throw new RequestError(`CharacterInfo ${infotype} request error`);
   }
   try {
+    if (isPrivate(html)) throw new PrivateError(`CharacterInfo ${infotype} is private`);
     parsed = parseCharacterInfo(infotype, html);
   } catch (e) {
-    throw new Error(`CharacterInfo ${infotype} parse error`);
+    console.log(e);
+    console.log(html);
+    throw new ParseError(`CharacterInfo ${infotype} parse error`);
   }
   return parsed;
 };
 
 export const getQuestDetail = async (infotype: INFOTYPE, entry: string, questData: object) => {
-  let html: string, parsed: object;
+  let html: string, parsed: any;
   try {
     html = await reqQuestDetail(entry, questData);
   } catch (e) {
-    throw new Error(`QuestDetail ${entry} request error`);
+    console.log(e);
+    if (e instanceof QuestNotFoundError) throw e;
+    throw new RequestError(`QuestDetail ${entry} request error`);
   }
   try {
     parsed = parseQuestDetail(infotype, html);
   } catch (e) {
-    throw new Error(`QuestDetail ${entry} parse error`);
+    console.log(e);
+    console.log(html);
+    throw new ParseError(`QuestDetail ${entry} parse error`);
   }
   return parsed;
 };
 
 export const getQuestGroupDetail = async (infotype: INFOTYPE, group: string, questData: object) => {
-  let details: object;
-  try {
-    const quests = Object.keys(questData[group]).map( async (questEntry: string) => {
-      return await getQuestDetail(infotype, `${group}\t${questEntry}`, questData);
-    });
-    details = await Promise.all(quests);
-  } catch (e) {
-    throw new Error(`QuestGroupDetail ${group} request error`);
-  }
+  if (questData?.[group] === undefined)
+    throw new QuestNotFoundError(`QuestGroup ${group} not found`);
+
+  const quests = Object.keys(questData[group]).map(async (questEntry: string) => {
+    return await getQuestDetail(infotype, `${group}\t${questEntry}`, questData);
+  });
+  const res = await Promise.allSettled(quests);
+
+  const details = res.map((item) => {
+    if (item.status === 'fulfilled') return item.value;
+    throw item.reason; //TODO: Retry
+  });
 
   return details;
 };

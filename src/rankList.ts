@@ -1,19 +1,20 @@
 import { getRank } from './controller';
 import { RANKTYPE } from './request/types/ranktype';
-import { RankRequest } from './requestType';
+import { ParseError, RequestError } from './types/error';
+import { RankRequest } from './types/requestType';
 
-exports.rankList = async (event: RankRequest) => {
-  let res: object;
+export const rankList = async (event: RankRequest) => {
   try {
-    res = await getRank(RANKTYPE[event.type || 'total'], event);
+    const data = await getRank(RANKTYPE[event.type || 'total'], event);
+    return {
+      status: 'success',
+      data,
+    };
   } catch (e) {
-    return JSON.stringify({
-      status: 'error',
-      message: e.message,
-    });
-  }
-  return JSON.stringify({
-    status: 'success',
-    data: res,
-  });
+    switch (e.constructor) {
+      case RequestError: return { status: 'err_request' };
+      case ParseError: return { status: 'err_parse' };
+      default: return { status: 'err_unknown' };
+    };
+  };
 };

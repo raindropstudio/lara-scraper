@@ -1,8 +1,12 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as http from 'http';
 import * as https from 'https';
 
+const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 3;
+const CHECK_INTERVAL_MS = 30;
 const GLOBAL_MAX_RETRY = 5;
+const RETRY_DELAY_MS = 100;
+let currentRequests = 0;
 let currentRetry = 0;
 
 export const reqMaple = axios.create({
@@ -29,28 +33,59 @@ export const reqMaple = axios.create({
   httpsAgent: new https.Agent({ keepAlive: true }),
 });
 
-reqMaple.interceptors.response.use(
-  (response: AxiosResponse) => {
-    // Response 내용이 100 미만일 경우 재시도
-    if (response.data.length < 100) {
-      if (currentRetry < GLOBAL_MAX_RETRY) {
-        console.log(`Null Response Retry (${currentRetry} / ${GLOBAL_MAX_RETRY}) : ${response.config.url}`);
-        currentRetry++;
-        return reqMaple.request(response.config);
-      }
-      console.log(`Null Response Reject (Retry count exceeded) : ${response.config.url}`);
-      return Promise.reject(response);
-    }
-
-    currentRetry = 0;
-    return Promise.resolve(response);
-  }, (error: AxiosError) => {
-    if (currentRetry < GLOBAL_MAX_RETRY) {
-      console.log(`Error Response Retry (${currentRetry} / ${GLOBAL_MAX_RETRY}) : ${error.config.url}`);
-      currentRetry++;
-      return reqMaple.request(error.config);
-    }
-    console.log(`Error Response Reject (Retry count exceeded) : ${error.config.url}`);
-    return Promise.reject(error);
+const retry = (res: AxiosResponse | AxiosError, desc: string) => {
+  if (currentRetry < GLOBAL_MAX_RETRY) {
+    console.log(`Retry [${desc}] (${currentRetry + 1} / ${GLOBAL_MAX_RETRY}) : ${res.config.url}`);
+    currentRetry++;
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(reqMaple.request(res.config));
+      }, RETRY_DELAY_MS * (currentRetry + 1));
+    });
   }
-);
+  console.log(`Reject [${desc}] (Retry count exceeded) : ${res.config.url}`);
+  return Promise.reject(res);
+};
+
+const reqThrottle = (config: AxiosRequestConfig) => {
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      if (currentRequests < MAX_CONCURRENT_REQUESTS) {
+        currentRequests++;
+        clearInterval(interval);
+        resolve(config);
+      }
+    }, CHECK_INTERVAL_MS);
+  });
+};
+
+const resThrottleSuccess = (response: AxiosResponse) => {
+  currentRequests = Math.max(0, currentRequests - 1);
+  return Promise.resolve(response);
+};
+
+const resThrottleError = (error: AxiosError) => {
+  currentRequests = Math.max(0, currentRequests - 1);
+  return Promise.reject(error);
+};
+
+const resChkSuccess = (response: AxiosResponse) => {
+  // Response 내용이 100 미만일 경우 재시도
+  //? Quest의 경우 응답이 json이므로 헤더의 Content-Length 확인
+  if (response.headers['content-length'] && parseInt(response.headers['content-length']) < 100)
+    return retry(response, 'Null Response');
+  // json이 아니고 2000 미만일 경우 재시도
+  if (response.data.length < 2000)
+    return retry(response, 'Null Body Response');
+
+  currentRetry = 0;
+  return Promise.resolve(response);
+};
+
+const resRetryError = (error: AxiosError) => {
+  return retry(error, 'HTTP Error');
+};
+
+reqMaple.interceptors.request.use(reqThrottle);
+reqMaple.interceptors.response.use(resThrottleSuccess, resThrottleError);
+reqMaple.interceptors.response.use(resChkSuccess, resRetryError);

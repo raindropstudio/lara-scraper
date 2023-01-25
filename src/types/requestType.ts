@@ -10,6 +10,18 @@ export interface RankRequest {
   limit?: number,
 };
 
+export interface QuestDetail {
+  type: 'questDetail',
+  progress?: {
+    group?: string[],
+    entry?: string[],
+  },
+  complete?: {
+    group?: string[],
+    entry?: string[],
+  },
+};
+
 export interface CharacterInfoRequest {
   nickname: string,
   rank?: [{
@@ -20,15 +32,7 @@ export interface CharacterInfoRequest {
     dojang?: string,
     grade?: string,
   }],
-  info?: [{
-    type: string,
-    progress?: {
-      group?: string[],
-      entry?: string[],
-    },
-    complete?: {
-      group?: string[],
-      entry?: string[],
-    },
-  }],
+  info?: [
+    { type: string } | QuestDetail
+  ],
 };

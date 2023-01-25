@@ -1,85 +1,127 @@
 import { getCharacterInfo, getQuestDetail, getQuestGroupDetail, getRank } from "./controller";
 import { INFOTYPE } from "./request/types/characterInfoType";
 import { RANKTYPE } from "./request/types/ranktype";
-import { CharacterInfoRequest } from "./requestType";
+import { ParseError, PrivateError, RequestError } from "./types/error";
+import { CharacterInfoRequest, QuestDetail } from "./types/requestType";
 
-exports.characterInfo = async (event: CharacterInfoRequest) => {
+const rankQuery = (event: CharacterInfoRequest) => {
+  if (!event.rank) return [];
+  const rankPromise = event.rank.map(async (entry) => {
+    return await getRank(RANKTYPE[entry.type], { nickname: event.nickname, ...entry });
+  })
+
+  return rankPromise;
+};
+
+const infoQuery = (event: CharacterInfoRequest, characterInfoUrl: string) => {
+  if (!event.info) return [];
+
+  const questDetail = async (query: QuestDetail) => {
+    const questPromise = {};
+    const quest = {
+      progress: { entry: [{}], group: [{}] },
+      complete: { entry: [{}], group: [{}] },
+    };
+
+    if (query.progress) {
+      const questData = await getCharacterInfo(INFOTYPE.quest, characterInfoUrl);
+      if (query.progress.entry) questPromise['progressEntry'] = query.progress.entry.map(async (item: string) => {
+        return await getQuestDetail(INFOTYPE.quest, item, questData);
+      });
+      if (query.progress.group) questPromise['progressGroup'] = query.progress.group.map(async (item: string) => {
+        return await getQuestGroupDetail(INFOTYPE.quest, item, questData);
+      });
+    }
+    if (query.complete) {
+      const questCompleteData = await getCharacterInfo(INFOTYPE.questComplete, characterInfoUrl);
+      if (query.complete.entry) questPromise['completeEntry'] = query.complete.entry.map(async (item: string) => {
+        return await getQuestDetail(INFOTYPE.questComplete, item, questCompleteData);
+      });
+      if (query.complete.group) questPromise['completeGroup'] = query.complete.group.map(async (item: string) => {
+        return await getQuestGroupDetail(INFOTYPE.questComplete, item, questCompleteData);
+      });
+    }
+
+    const getResult = async (promise: [{}], isGroup: boolean) => {
+      const result = await Promise.allSettled(promise);
+      return result.map((entry) => {
+        if (entry.status === 'fulfilled') return entry.value;
+        console.log(entry.reason);
+        return isGroup ? [] : {};
+      });
+    }
+
+    quest.progress.entry = await getResult(questPromise['progressEntry'] ?? [], false);
+    quest.progress.group = await getResult(questPromise['progressGroup'] ?? [], true);
+    quest.complete.entry = await getResult(questPromise['completeEntry'] ?? [], false);
+    quest.complete.group = await getResult(questPromise['completeGroup'] ?? [], true);
+
+    return quest;
+  };
+
+  const task = event.info.map(async (entry) => {
+    if (entry.type === 'questDetail') return await questDetail(entry as QuestDetail);
+    return await getCharacterInfo(INFOTYPE[entry.type], characterInfoUrl);
+  });
+
+  return task;
+};
+
+export const characterInfo = async (event: CharacterInfoRequest) => {
   //? 캐릭터정보 URL
   let characterInfoUrl: string;
   try {
     const character = await getRank(RANKTYPE['total'], { nickname: event.nickname });
+    if (character.searchCharacter === -1)
+      return { status: 'err_character_not_found' };
     characterInfoUrl = character.list[character.searchCharacter].characterInfoUrl;
   } catch (e) {
     console.log(e);
-    return {
-      status: 'error',
-      message: e.message,
-    };
+    return { status: 'err_character_find' };
   }
 
-  const data: object = {};
   try {
-    let rank, info;
+    const data: object = {};
 
-    //? rank
+    //? Rank
     if (event.rank) {
-      rank = Promise.all(event.rank.map(async (entry) => {
-        return await getRank(RANKTYPE[entry.type], { nickname: event.nickname, ...entry });
-      }));
-    }
-
-    //? info
-    if (event.info) {
-      // questDetail 특별하게 처리
-      const questDetail = async (entry: object) => {
-        const questType = {
-          'progress': 'quest',
-          'complete': 'questComplete',
+      const res = await Promise.allSettled(rankQuery(event));
+      data['rank'] = res.map((entry) => {
+        if (entry.status === 'fulfilled') return entry.value;
+        console.log(entry.reason);
+        switch (entry.reason.constructor) {
+          case RequestError: return { error: 'err_request' };
+          case ParseError: return { error: 'err_parse' };
+          default: return { error: 'err_unknown' };
         };
-        const getDetail = {
-          'group': getQuestGroupDetail,
-          'entry': getQuestDetail,
-        };
-
-        let questPromise = [];
-        for (const qtype in questType) {
-          if (entry[qtype]) {
-            const quest = await getCharacterInfo(INFOTYPE[questType[qtype]], characterInfoUrl);
-            for (const dtype in getDetail) {
-              if (entry[qtype][dtype]) {
-                questPromise = questPromise.concat(entry[qtype][dtype].map(async (item: string) => {
-                  return await getDetail[dtype](INFOTYPE[questType[qtype]], item, quest);
-                }));
-              }
-            }
-          }
-        }
-        return questPromise;
-      };
-
-      const task = event.info.map(async (entry) => {
-        if (entry.type === 'questDetail')
-          return await Promise.all(await questDetail(entry));
-        else
-          return await getCharacterInfo(INFOTYPE[entry.type], characterInfoUrl);
       });
-
-      info = Promise.all(task);
     }
 
-    //? await
-    if (event.rank) data['rank'] = await rank;
-    if (event.info) data['info'] = await info;
+    //? Info
+    if (event.info) {
+      const res = await Promise.allSettled(infoQuery(event, characterInfoUrl));
+      data['info'] = res.map((entry) => {
+        if (entry.status === 'fulfilled') return entry.value;
+        console.log(entry.reason);
+        switch (entry.reason.constructor) {
+          case RequestError: return { error: 'err_request' };
+          case ParseError: return { error: 'err_parse' };
+          case PrivateError: return { error: 'err_private' };
+          default: return { error: 'err_unknown' };
+        };
+      });
+    }
+
+    return {
+      status: 'success',
+      data,
+    };
   } catch (e) {
     console.log(e);
-    return {
-      status: 'error',
-      message: e.message,
-    };
-  }
-
-  return {
-    status: 'success',
-    data,
+    switch (e.constructor) {
+      case RequestError: return { status: 'err_request' };
+      case ParseError: return { status: 'err_parse' };
+      default: return { status: 'err_unknown' };
+    }
   }
 };
