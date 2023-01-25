@@ -68,8 +68,8 @@ export const getCharacterInfo = async (infotype: INFOTYPE, url: string) => {
     console.log(e);
     throw new RequestError(`CharacterInfo ${infotype} request error`);
   }
+  if (isPrivate(html)) throw new PrivateError(`CharacterInfo ${infotype} is private`);
   try {
-    if (isPrivate(html)) throw new PrivateError(`CharacterInfo ${infotype} is private`);
     parsed = parseCharacterInfo(infotype, html);
   } catch (e) {
     console.log(e);
@@ -102,8 +102,8 @@ export const getQuestGroupDetail = async (infotype: INFOTYPE, group: string, que
   if (questData?.[group] === undefined)
     throw new QuestNotFoundError(`QuestGroup ${group} not found`);
 
-  const quests = Object.keys(questData[group]).map(async (questEntry: string) => {
-    return await getQuestDetail(infotype, `${group}\t${questEntry}`, questData);
+  const quests = Object.keys(questData[group]).map((questEntry: string) => {
+    return getQuestDetail(infotype, `${group}\t${questEntry}`, questData);
   });
   const res = await Promise.allSettled(quests);
 
