@@ -11,8 +11,10 @@
 #
 # Happy Coding!
 
-org: qilip
-app: lara
+# AWS 서울 리전 Dashboard 연동 미지원
+# org: qilip
+# app: lara
+
 service: lara-scraper
 
 # You can pin your service to only deploy with a specific Serverless version
