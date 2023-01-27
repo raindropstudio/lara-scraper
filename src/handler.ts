@@ -16,20 +16,17 @@ process.on('unhandledRejection', (reason, promise) => {
   logger.fatal(reason);
 });
 
-exports.rankList = async (event: RankRequest) => {
+export const handler = async (event: CharacterInfoRequest | RankRequest) => {
   try {
-    const res = await rankList(event);
-    // return res;
-    return JSON.stringify(res);
-  } catch (e) {
-    logger.error(e);
-    return JSON.stringify({ status: 'err_unknown' });
-  }
-};
-
-exports.characterInfo = async (event: CharacterInfoRequest) => {
-  try {
-    const res = await characterInfo(event);
+    let res = {};
+    if (event.nickname) {
+      // TODO: 입력 검증
+      res = await characterInfo(event as CharacterInfoRequest);
+    }
+    else {
+      // TODO: 입력 검증
+      res = await rankList(event as RankRequest);
+    };
     // return res;
     return JSON.stringify(res);
   } catch (e) {
