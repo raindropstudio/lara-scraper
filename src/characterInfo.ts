@@ -1,8 +1,13 @@
+import { Signale } from "signale-logger";
 import { getCharacterInfo, getQuestDetail, getQuestGroupDetail, getRank } from "./controller";
 import { INFOTYPE } from "./request/types/characterInfoType";
 import { RANKTYPE } from "./request/types/ranktype";
 import { ParseError, PrivateError, RequestError } from "./types/error";
 import { CharacterInfoRequest, QuestDetail } from "./types/requestType";
+
+const logger = new Signale({ scope: 'Character Info' });
+
+let errorCount = 0;
 
 const rankQuery = (event: CharacterInfoRequest) => {
   if (!event.rank) return [];
@@ -46,7 +51,8 @@ const infoQuery = (event: CharacterInfoRequest, characterInfoUrl: string) => {
       const result = await Promise.allSettled(promise);
       return result.map((entry) => {
         if (entry.status === 'fulfilled') return entry.value;
-        console.log(entry.reason);
+        errorCount++;
+        logger.error(entry.reason);
         return isGroup ? [] : {};
       });
     }
@@ -76,7 +82,7 @@ export const characterInfo = async (event: CharacterInfoRequest) => {
       return { status: 'err_character_not_found' };
     characterInfoUrl = character.list[character.searchCharacter].characterInfoUrl;
   } catch (e) {
-    console.log(e);
+    logger.error(e);
     return { status: 'err_character_find' };
   }
 
@@ -88,7 +94,8 @@ export const characterInfo = async (event: CharacterInfoRequest) => {
       const res = await Promise.allSettled(rankQuery(event));
       data['rank'] = res.map((entry) => {
         if (entry.status === 'fulfilled') return entry.value;
-        console.log(entry.reason);
+        errorCount++;
+        logger.error(entry.reason);
         switch (entry.reason.constructor) {
           case RequestError: return { error: 'err_request' };
           case ParseError: return { error: 'err_parse' };
@@ -102,22 +109,27 @@ export const characterInfo = async (event: CharacterInfoRequest) => {
       const res = await Promise.allSettled(infoQuery(event, characterInfoUrl));
       data['info'] = res.map((entry) => {
         if (entry.status === 'fulfilled') return entry.value;
-        console.log(entry.reason);
+        errorCount++;
+        if (entry.reason instanceof PrivateError) {
+          logger.info(entry.reason.message);
+          return { error: 'err_private' };
+        };
+        logger.error(entry.reason);
         switch (entry.reason.constructor) {
           case RequestError: return { error: 'err_request' };
           case ParseError: return { error: 'err_parse' };
-          case PrivateError: return { error: 'err_private' };
           default: return { error: 'err_unknown' };
         };
       });
     }
+    if(errorCount) logger.warn(`Total ${errorCount} request(s) failed`);
 
     return {
-      status: 'success',
+      status: errorCount ? 'warn_partial_fail' : 'success',
       data,
     };
   } catch (e) {
-    console.log(e);
+    logger.error(e);
     switch (e.constructor) {
       case RequestError: return { status: 'err_request' };
       case ParseError: return { status: 'err_parse' };

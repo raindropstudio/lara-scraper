@@ -1,6 +1,9 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as http from 'http';
 import * as https from 'https';
+import { Signale } from 'signale-logger';
+
+const logger = new Signale({ scope: 'Axios' });
 
 const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 3;
 const CHECK_INTERVAL_MS = 30;
@@ -35,7 +38,7 @@ export const reqMaple = axios.create({
 
 const retry = (res: AxiosResponse | AxiosError, desc: string): Promise<AxiosResponse> => {
   if (currentRetry < GLOBAL_MAX_RETRY) {
-    console.log(`Retry [${desc}] (${currentRetry + 1} / ${GLOBAL_MAX_RETRY}) : ${res.config?.url}`);
+    logger.warn(`Retry [${desc}] (${currentRetry + 1} / ${GLOBAL_MAX_RETRY}) : ${res.config?.url}`);
     currentRetry++;
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -43,7 +46,7 @@ const retry = (res: AxiosResponse | AxiosError, desc: string): Promise<AxiosResp
       }, RETRY_DELAY_MS * (currentRetry + 1));
     });
   }
-  console.log(`Reject [${desc}] (Retry count exceeded) : ${res.config?.url}`);
+  logger.error(`Reject [${desc}] (Retry count exceeded) : ${res.config?.url}`);
   return Promise.reject(res);
 };
 

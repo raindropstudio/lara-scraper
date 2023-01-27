@@ -1,16 +1,19 @@
+import { Signale } from 'signale-logger';
 import { characterInfo } from "./characterInfo";
 import { rankList } from "./rankList";
 import { CharacterInfoRequest, RankRequest } from "./types/requestType";
 
+const logger = new Signale({ scope: 'handler' });
+
 process.on('uncaughtException', (err) => {
-  console.log('uncaughtException');
-  console.log(err);
+  logger.fatal('uncaughtException');
+  logger.fatal(err);
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  console.log('unhandledRejection: ' + promise);
-  console.log(reason);
+  logger.fatal('unhandledRejection: ' + promise);
+  logger.fatal(reason);
 });
 
 exports.rankList = async (event: RankRequest) => {
@@ -19,7 +22,7 @@ exports.rankList = async (event: RankRequest) => {
     // return res;
     return JSON.stringify(res);
   } catch (e) {
-    console.log(e);
+    logger.error(e);
     return JSON.stringify({ status: 'err_unknown' });
   }
 };
@@ -30,7 +33,7 @@ exports.characterInfo = async (event: CharacterInfoRequest) => {
     // return res;
     return JSON.stringify(res);
   } catch (e) {
-    console.log(e);
+    logger.error(e);
     return JSON.stringify({ status: 'err_unknown' });
   }
 };

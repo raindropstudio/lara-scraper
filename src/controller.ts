@@ -1,3 +1,4 @@
+import { Signale } from "signale-logger";
 import { parseCharacterInfo } from "./parser/character";
 import { isPrivate } from "./parser/info/private";
 import { parseQuestDetail } from "./parser/info/questDetail";
@@ -11,6 +12,8 @@ import { Option, RANKTYPE } from "./request/types/ranktype";
 import { ParseError, PrivateError, QuestNotFoundError, RequestError } from "./types/error";
 import { RankRequest } from "./types/requestType";
 
+const logger = new Signale({ scope: 'Controller' });
+
 interface RankPage {
   searchCharacter: number,
   list: RankData[],
@@ -21,14 +24,14 @@ export const getRankPage = async (ranktype: RANKTYPE, option: Option) => {
   try {
     html = await reqRank(ranktype, option);
   } catch (e) {
-    console.log(e);
+    logger.error({ prefix: '[getRankPage:Req]', message: e });
     throw new RequestError(`Rank ${ranktype} request error`);
   }
   try {
     parsed = parseRank(ranktype, html);
   } catch (e) {
-    console.log(e);
-    console.log(html);
+    logger.error({ prefix: '[getRankPage:Parse]', message: e });
+    logger.debug(html);
     throw new ParseError(`Rank ${ranktype} parse error`);
   }
   return parsed;
@@ -65,15 +68,15 @@ export const getCharacterInfo = async (infotype: INFOTYPE, url: string) => {
   try {
     html = await reqCharacterInfo(infotype, url);
   } catch (e) {
-    console.log(e);
+    logger.error({ prefix: '[getCharacterInfo:Req]', message: e });
     throw new RequestError(`CharacterInfo ${infotype} request error`);
   }
   if (isPrivate(html)) throw new PrivateError(`CharacterInfo ${infotype} is private`);
   try {
     parsed = parseCharacterInfo(infotype, html);
   } catch (e) {
-    console.log(e);
-    console.log(html);
+    logger.error({ prefix: '[getCharacterInfo:Parse]', message: e });
+    logger.debug(html);
     throw new ParseError(`CharacterInfo ${infotype} parse error`);
   }
   return parsed;
@@ -84,15 +87,15 @@ export const getQuestDetail = async (infotype: INFOTYPE, entry: string, questDat
   try {
     html = await reqQuestDetail(entry, questData);
   } catch (e) {
-    console.log(e);
+    logger.error({ prefix: '[getQuestDetail:Req]', message: e });
     if (e instanceof QuestNotFoundError) throw e;
     throw new RequestError(`QuestDetail ${entry} request error`);
   }
   try {
     parsed = parseQuestDetail(infotype, html);
   } catch (e) {
-    console.log(e);
-    console.log(html);
+    logger.error({ prefix: '[getQuestDetail:Parse]', message: e });
+    logger.debug(html);
     throw new ParseError(`QuestDetail ${entry} parse error`);
   }
   return parsed;

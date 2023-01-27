@@ -19,14 +19,40 @@
   },
   "homepage": "https://github.com/raindropstudio/lara-scraper#readme",
   "devDependencies": {
-    "serverless": "^3.26.0",
+    "serverless": "^3.27.0",
     "serverless-offline": "^12.0.4",
     "serverless-plugin-typescript": "^2.1.4",
     "typescript": "^4.9.4"
   },
   "dependencies": {
-    "axios": "^1.2.4",
+    "axios": "^1.2.5",
     "cheerio": "^1.0.0-rc.12",
-    "luxon": "^3.2.1"
+    "luxon": "^3.2.1",
+    "signale-logger": "^1.5.1"
+  },
+  "signale-logger": {
+    "displayScope": true,
+    "displayBadge": true,
+    "displayDate": true,
+    "displayFilename": false,
+    "displayLine": true,
+    "displayColumn": false,
+    "displayLabel": true,
+    "displayTimestamp": true,
+    "underlineLabel": true,
+    "underlineMessage": false,
+    "underlinePrefix": false,
+    "underlineSuffix": false,
+    "uppercaseLabel": true,
+    "timeZone": "Asia/Seoul",
+    "formatDate": "YYYY-MM-DD",
+    "formatTime": "HH:mm:ss",
+    "logLevels": {
+      "debug": 0,
+      "info": 1,
+      "timer": 2,
+      "warn": 3,
+      "error": 4
+    }
   }
 }
