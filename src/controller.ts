@@ -1,4 +1,3 @@
-import { Signale } from "signale-logger";
 import { parseCharacterInfo } from "./parser/character";
 import { isPrivate } from "./parser/info/private";
 import { parseQuestDetail } from "./parser/info/questDetail";
@@ -11,8 +10,9 @@ import { INFOTYPE } from "./request/types/characterInfoType";
 import { Option, RANKTYPE } from "./request/types/ranktype";
 import { ParseError, PrivateError, QuestNotFoundError, RequestError } from "./types/error";
 import { RankRequest } from "./types/requestType";
+import { Logger } from "./utils/logger";
 
-const logger = new Signale({ scope: 'Controller' });
+const logger = Logger.scope('Controller');
 
 interface RankPage {
   searchCharacter: number,
@@ -49,7 +49,9 @@ export const getRank = async (ranktype: RANKTYPE, param: RankRequest) => {
     }
   }
 
+  logger.time('getRank: ' + JSON.stringify(param));
   const res = await Promise.allSettled(promise);
+  logger.timeEnd('getRank: ' + JSON.stringify(param));
 
   const rankPages = res.map((item) => {
     if (item.status === 'fulfilled') return item.value;
@@ -65,6 +67,7 @@ export const getRank = async (ranktype: RANKTYPE, param: RankRequest) => {
 
 export const getCharacterInfo = async (infotype: INFOTYPE, url: string) => {
   let html: string, parsed: object;
+  logger.time('getCharacterInfo: ' + infotype);
   try {
     html = await reqCharacterInfo(infotype, url);
   } catch (e) {
@@ -79,6 +82,7 @@ export const getCharacterInfo = async (infotype: INFOTYPE, url: string) => {
     logger.debug(html);
     throw new ParseError(`CharacterInfo ${infotype} parse error`);
   }
+  logger.timeEnd('getCharacterInfo: ' + infotype);
   return parsed;
 };
 
@@ -105,6 +109,8 @@ export const getQuestGroupDetail = async (infotype: INFOTYPE, group: string, que
   if (questData?.[group] === undefined)
     throw new QuestNotFoundError(`QuestGroup ${group} not found`);
 
+  logger.time('getQuestGroupDetail: ' + group);
+
   const quests = Object.keys(questData[group]).map((questEntry: string) => {
     return getQuestDetail(infotype, `${group}\t${questEntry}`, questData);
   });
@@ -114,6 +120,6 @@ export const getQuestGroupDetail = async (infotype: INFOTYPE, group: string, que
     if (item.status === 'fulfilled') return item.value;
     throw item.reason; //TODO: Retry
   });
-
+  logger.timeEnd('getQuestGroupDetail: ' + group);
   return details;
 };

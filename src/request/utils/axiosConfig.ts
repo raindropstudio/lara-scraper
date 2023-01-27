@@ -1,16 +1,21 @@
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as http from 'http';
 import * as https from 'https';
-import { Signale } from 'signale-logger';
+import { Logger } from '../../utils/logger';
 
-const logger = new Signale({ scope: 'Axios' });
+const logger = Logger.scope('Axios');
 
-const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 3;
-const CHECK_INTERVAL_MS = 30;
+const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 8;
+const CHECK_INTERVAL_MS = 10;
 const GLOBAL_MAX_RETRY = 5;
 const RETRY_DELAY_MS = 100;
 let currentRequests = 0;
 let currentRetry = 0;
+
+export const resetAxios = () => {
+  currentRequests = 0;
+  currentRetry = 0;
+};
 
 export const reqMaple = axios.create({
   baseURL: 'https://maplestory.nexon.com',

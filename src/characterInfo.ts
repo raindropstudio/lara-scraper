@@ -1,11 +1,11 @@
-import { Signale } from "signale-logger";
 import { getCharacterInfo, getQuestDetail, getQuestGroupDetail, getRank } from "./controller";
 import { INFOTYPE } from "./request/types/characterInfoType";
 import { RANKTYPE } from "./request/types/ranktype";
 import { ParseError, PrivateError, RequestError } from "./types/error";
 import { CharacterInfoRequest, QuestDetail } from "./types/requestType";
+import { Logger } from "./utils/logger";
 
-const logger = new Signale({ scope: 'Character Info' });
+const logger = Logger.scope('Character Info');
 
 let errorCount = 0;
 
@@ -51,7 +51,6 @@ const infoQuery = (event: CharacterInfoRequest, characterInfoUrl: string) => {
       const result = await Promise.allSettled(promise);
       return result.map((entry) => {
         if (entry.status === 'fulfilled') return entry.value;
-        errorCount++;
         logger.error(entry.reason);
         return isGroup ? [] : {};
       });
@@ -74,6 +73,8 @@ const infoQuery = (event: CharacterInfoRequest, characterInfoUrl: string) => {
 };
 
 export const characterInfo = async (event: CharacterInfoRequest) => {
+  errorCount = 0;
+
   //? 캐릭터정보 URL
   let characterInfoUrl: string;
   try {

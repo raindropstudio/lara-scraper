@@ -1,10 +1,10 @@
-import { Signale } from 'signale-logger';
 import { getRank } from './controller';
 import { RANKTYPE } from './request/types/ranktype';
 import { ParseError, RequestError } from './types/error';
 import { RankRequest } from './types/requestType';
+import { Logger } from './utils/logger';
 
-const logger = new Signale({ scope: 'Rank List' });
+const logger = Logger.scope('Rank List');
 
 export const rankList = async (event: RankRequest) => {
   try {
