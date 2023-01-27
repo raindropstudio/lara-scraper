@@ -11,14 +11,15 @@
 #
 # Happy Coding!
 
+org: qilip
+app: lara
 service: lara-scraper
-# app and org for use with dashboard.serverless.com
-#app: your-app-name
-#org: your-org-name
 
 # You can pin your service to only deploy with a specific Serverless version
 # Check out our docs for more details
 # frameworkVersion: "=X.X.X"
+
+frameworkVersion: '3'
 
 plugins:
   - serverless-plugin-typescript
@@ -26,7 +27,13 @@ plugins:
 
 provider:
   name: aws
+  deploymentMethod: direct
+  region: ap-northeast-2
+  stage: ${opt:stage, 'dev'}
   runtime: nodejs16.x
+  memorySize: 512
+  timeout: 10
+  logRetentionInDays: 14
 
 # you can overwrite defaults here
 #  stage: dev
