@@ -18,54 +18,69 @@ const rankQuery = (event: CharacterInfoRequest) => {
   return rankPromise;
 };
 
-const infoQuery = (event: CharacterInfoRequest, characterInfoUrl: string) => {
-  if (!event.info) return [];
+const questDetail = async (query: QuestDetail, characterInfoUrl: string, questData: object, questCompleteData: object) => {
+  const questPromise = {};
 
-  const questDetail = async (query: QuestDetail) => {
-    const questPromise = {};
-    const quest = {
-      progress: { entry: [{}], group: [{}] },
-      complete: { entry: [{}], group: [{}] },
-    };
+  questPromise['progressEntry'] = query.progress?.entry?.map((item: string) => {
+    return getQuestDetail(INFOTYPE.quest, item, questData);
+  });
+  questPromise['progressGroup'] = query.progress?.group?.map((item: string) => {
+    return getQuestGroupDetail(INFOTYPE.quest, item, questData);
+  });
+  questPromise['completeEntry'] = query.complete?.entry?.map((item: string) => {
+    return getQuestDetail(INFOTYPE.questComplete, item, questCompleteData);
+  });
+  questPromise['completeGroup'] = query.complete?.group?.map((item: string) => {
+    return getQuestGroupDetail(INFOTYPE.questComplete, item, questCompleteData);
+  });
 
-    if (query.progress) {
-      const questData = await getCharacterInfo(INFOTYPE.quest, characterInfoUrl);
-      if (query.progress.entry) questPromise['progressEntry'] = query.progress.entry.map((item: string) => {
-        return getQuestDetail(INFOTYPE.quest, item, questData);
-      });
-      if (query.progress.group) questPromise['progressGroup'] = query.progress.group.map((item: string) => {
-        return getQuestGroupDetail(INFOTYPE.quest, item, questData);
-      });
-    }
-    if (query.complete) {
-      const questCompleteData = await getCharacterInfo(INFOTYPE.questComplete, characterInfoUrl);
-      if (query.complete.entry) questPromise['completeEntry'] = query.complete.entry.map((item: string) => {
-        return getQuestDetail(INFOTYPE.questComplete, item, questCompleteData);
-      });
-      if (query.complete.group) questPromise['completeGroup'] = query.complete.group.map((item: string) => {
-        return getQuestGroupDetail(INFOTYPE.questComplete, item, questCompleteData);
-      });
-    }
+  const getResult = async (promise: [{}], isGroup: boolean) => {
+    const result = await Promise.allSettled(promise);
+    return result.map((entry) => {
+      if (entry.status === 'fulfilled') return entry.value;
+      logger.error(entry.reason);
+      return isGroup ? [] : {};
+    });
+  }
 
-    const getResult = async (promise: [{}], isGroup: boolean) => {
-      const result = await Promise.allSettled(promise);
-      return result.map((entry) => {
-        if (entry.status === 'fulfilled') return entry.value;
-        logger.error(entry.reason);
-        return isGroup ? [] : {};
-      });
-    }
+  const [progressEntry, progressGroup, completeEntry, completeGroup] = await Promise.all([
+    getResult(questPromise['progressEntry'] ?? [], false),
+    getResult(questPromise['progressGroup'] ?? [], true),
+    getResult(questPromise['completeEntry'] ?? [], false),
+    getResult(questPromise['completeGroup'] ?? [], true),
+  ]);
 
-    quest.progress.entry = await getResult(questPromise['progressEntry'] ?? [], false);
-    quest.progress.group = await getResult(questPromise['progressGroup'] ?? [], true);
-    quest.complete.entry = await getResult(questPromise['completeEntry'] ?? [], false);
-    quest.complete.group = await getResult(questPromise['completeGroup'] ?? [], true);
-
-    return quest;
+  const quest = {
+    progress: {
+      entry: progressEntry,
+      group: progressGroup,
+    },
+    complete: {
+      entry: completeEntry,
+      group: completeGroup,
+    },
   };
 
-  const task = event.info.map((entry) => {
-    if (entry.type === 'questDetail') return questDetail(entry as QuestDetail);
+  return quest;
+};
+
+const infoQuery = (event: CharacterInfoRequest, characterInfoUrl: string) => {
+  if (!event.info) return [];
+  let questDataPromise: Promise<{}>, questCompleteDataPromise: Promise<{}>;
+
+  if (event.info.some((entry) => entry.type === 'questDetail')) {
+    questDataPromise = getCharacterInfo(INFOTYPE.quest, characterInfoUrl);
+    questCompleteDataPromise = getCharacterInfo(INFOTYPE.questComplete, characterInfoUrl);
+  };
+
+  const task = event.info.map(async (entry) => {
+    if (entry.type === 'quest') return questDataPromise;
+    if (entry.type === 'questComplete') return questCompleteDataPromise;
+    if (entry.type === 'questDetail') {
+      const questData = await questDataPromise;
+      const questCompleteData = await questCompleteDataPromise;
+      return questDetail(entry as QuestDetail, characterInfoUrl, questData, questCompleteData);
+    };
     return getCharacterInfo(INFOTYPE[entry.type], characterInfoUrl);
   });
 
@@ -88,11 +103,13 @@ export const characterInfo = async (event: CharacterInfoRequest) => {
   }
 
   try {
-    const data: object = {};
+    const data = {};
+    const rankPromise = Promise.allSettled(rankQuery(event));
+    const infoPromise = Promise.allSettled(infoQuery(event, characterInfoUrl));
 
     //? Rank
     if (event.rank) {
-      const res = await Promise.allSettled(rankQuery(event));
+      const res = await rankPromise;
       data['rank'] = res.map((entry) => {
         if (entry.status === 'fulfilled') return entry.value;
         errorCount++;
@@ -107,7 +124,7 @@ export const characterInfo = async (event: CharacterInfoRequest) => {
 
     //? Info
     if (event.info) {
-      const res = await Promise.allSettled(infoQuery(event, characterInfoUrl));
+      const res = await infoPromise;
       data['info'] = res.map((entry) => {
         if (entry.status === 'fulfilled') return entry.value;
         errorCount++;
@@ -123,6 +140,7 @@ export const characterInfo = async (event: CharacterInfoRequest) => {
         };
       });
     }
+
     if(errorCount) logger.warn(`Total ${errorCount} request(s) failed`);
 
     return {

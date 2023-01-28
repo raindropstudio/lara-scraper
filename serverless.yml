@@ -20,7 +20,7 @@ provider:
   region: ap-northeast-2
   stage: ${opt:stage, 'dev'}
   runtime: nodejs16.x
-  memorySize: 512
+  memorySize: 1024
   timeout: 10
   logRetentionInDays: 14
 

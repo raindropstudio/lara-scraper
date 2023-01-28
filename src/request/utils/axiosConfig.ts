@@ -5,7 +5,7 @@ import { Logger } from '../../utils/logger';
 
 const logger = Logger.scope('Axios');
 
-const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 8;
+const MAX_CONCURRENT_REQUESTS = process.env.AXIOS_MAX_CON || 4;
 const CHECK_INTERVAL_MS = 10;
 const GLOBAL_MAX_RETRY = 5;
 const RETRY_DELAY_MS = 100;
